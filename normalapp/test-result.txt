@@ -1,0 +1,32 @@
+/buy
+    condition:   120 user, 100 good
+    result:
+        23s compelete
+        120 order
+        61 stock
+/buy2
+    condition:   120 user, 100 good
+    result:
+        27s compelete
+        120 order
+        87 stock
+
+/buy3
+    condition:   120 user, 100 good
+    result:
+        34s compelete
+        120 order
+        0 stock
+        
+/buy4
+    condition:   120 user, 100 good
+    result:
+        24s compelete
+        120 order
+        80 stock
+    # 更改mysql隔离级别为read-committed后
+    result:
+        19s compelete
+        74 order 其他出错
+        79 stock
+

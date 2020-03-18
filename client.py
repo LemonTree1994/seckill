@@ -20,8 +20,8 @@ if __name__ == '__main__':
         user_num = int(args[2])
         inputargs = [(url, i, 1) for i in range(user_num)]
         if len(args) == 4 and args[3] in ["repeat","r"]:
-            inputargs = [(url, i//2, 1) for i in range(user_num)]
-        pool = ThreadPoolExecutor(max_workers=10,thread_name_prefix="req_")
+            inputargs = [(url, i//5, 1) for i in range(user_num)]
+        pool = ThreadPoolExecutor(max_workers=100,thread_name_prefix="req_")
         t1 = time.time()
         res = pool.map(dec_buy,inputargs)
         for r in res:

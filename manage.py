@@ -1,9 +1,9 @@
 from flask_script import Manager, Server
 from flask_migrate import Migrate, MigrateCommand
 
-from normalapp import create_app as create_normalapp, db
-
-app = create_normalapp()
+# from normalapp import create_app as create_normalapp, db
+from rediscacheapp import create_app as create_rediscacheapp, db
+app = create_rediscacheapp()
 manager = Manager(app)
 migrate = Migrate(app,db)
 manager.add_command("db",MigrateCommand)

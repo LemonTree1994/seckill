@@ -102,10 +102,11 @@ def buy2():
     finally:
         lock.release()
 
+def _decode(byteobject):
+    return byteobject.decode("utf-8")
+
 @bp.route("/")
 def get_all_orders():
-    orders = Orders.query.all()
-    results = []
-    for order in orders:
-        results.append("Order<{}>: user<{}> good<{}>".format(order.id, order.userid,order.goodid))
-    return jsonify(results)
+    orders = redis.lrange(oname,0,-1)
+    orders = list(map(_decode,orders))
+    return "<br />".join(orders)

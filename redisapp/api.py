@@ -1,34 +1,29 @@
 from flask import Blueprint, request, jsonify
 import threading
 
-from .models import db, Goods, Orders
 from . import redis
 
 bp = Blueprint("api",__name__,url_prefix="/")
 keyname = "seckill:rediscacheapp:"
 # 商品库存 string
-gname = keyname + "good:"
+gname = keyname + "good:1"
 # 商品已下单用户 set
-uname = keyname + "user:"
+uname = keyname + "user:1"
+oname = keyname + "order:1"
 
 @bp.route("/initredis")
 def init_redis():
+
+    stock = request.args.get("stock") or 10
     ping = redis.ping()
     if not ping:
         return "redis connection error"
+    redis.set(gname, stock)
+    if redis.exists(uname):
+        redis.delete(uname)
+    if redis.exists(oname):
+        redis.delete(oname)
 
-    goods = Goods.query.all()
-    for good in goods:
-        # 更新商品库存
-        redis.set(gname+str(good.id),good.stock)
-        # 删除原有购物用户记录
-        if redis.exists(uname + str(good.id)):
-            redis.delete(uname + str(good.id))
-
-    orders = Orders.query.all()
-    # 更新用户购物记录
-    for order in orders:
-        redis.sadd(uname+str(order.goodid),str(order.userid))
     return "init redis finished"
 
 @bp.route("/buy")
@@ -44,33 +39,26 @@ def buy():
     try:
         if not redis.ping():
             return "redis server connection error"
-        good_name = gname + str(goodid)
-        user_name = uname + str(goodid)
-        if redis.exists(good_name):
-            stock = redis.get(good_name)
+        if redis.exists(gname):
+            stock = redis.get(gname)
             stock = int(stock.decode("utf-8"))
             if stock>0:
-                if redis.sismember(user_name,userid):
+                if redis.sismember(uname,userid):
                     return "can only buy 1"
                 else:
                     pipe = redis.pipeline()
                     pipe.multi()
-                    new_stock = redis.incrby(good_name,-1)
-                    redis.sadd(user_name,userid)
+                    redis.incrby(gname,-1)
+                    redis.sadd(uname,userid)
+                    redis.lpush(oname,str(userid)+"'s order")
                     pipe.execute()
-                    good = Goods.query.filter_by(id=goodid).first()
-                    good.stock = new_stock
-                    order = Orders(userid=userid,goodid=goodid)
-                    db.session.add(order)
-                    db.session.commit()
-                    return str(order.id)
+                    return str(userid)+"'s order"
             else:
                 return "out of stock"
         else:
             return "no this thing"
     except Exception as e:
         print(e)
-        db.session.rollback()
 
 
 #look
@@ -85,39 +73,32 @@ def buy2():
     goodid = data.get("goodid")
 
     if not userid or not goodid:
-        return "error", 400
+        return "error",400
 
     try:
+        lock.acquire()
         if not redis.ping():
             return "redis server connection error"
-        good_name = gname + str(goodid)
-        user_name = uname + str(goodid)
-        lock.acquire()
-        if redis.exists(good_name):
-            stock = redis.get(good_name)
+        if redis.exists(gname):
+            stock = redis.get(gname)
             stock = int(stock.decode("utf-8"))
-            if stock > 0:
-                if redis.sismember(user_name, userid):
+            if stock>0:
+                if redis.sismember(uname,userid):
                     return "can only buy 1"
                 else:
                     pipe = redis.pipeline()
                     pipe.multi()
-                    new_stock = redis.incrby(good_name, -1)
-                    redis.sadd(user_name, userid)
+                    redis.incrby(gname,-1)
+                    redis.sadd(uname,userid)
+                    redis.lpush(oname,str(userid)+"'s order")
                     pipe.execute()
-                    good = Goods.query.filter_by(id=goodid).first()
-                    good.stock = new_stock
-                    order = Orders(userid=userid, goodid=goodid)
-                    db.session.add(order)
-                    db.session.commit()
-                    return str(order.id)
+                    return str(userid)+"'s order"
             else:
                 return "out of stock"
         else:
             return "no this thing"
     except Exception as e:
         print(e)
-        db.session.rollback()
     finally:
         lock.release()
 

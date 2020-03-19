@@ -1,0 +1,55 @@
+
+/buy
+    condition:   100 user, 10 good
+    result:
+        0.4s compelete
+        10 order
+        1 stock
+
+/buy    带重复用户
+    condition:   100 user, 10 good
+    result:
+        0.4s compelete
+        10 order
+        0 stock
+
+/buy    带重复用户
+    condition:   100000 user, 100 good 10thread worker
+    result:
+        328s compelete
+        100 order
+        0 stock
+
+
+/buy2
+    condition:   100 user, 10 good
+    result:
+        0.5s compelete
+        10 order
+        0 stock
+
+
+
+
+
+/buy    带重复用户
+    condition:   10000 user, 100 good 100thread worker
+    result:
+        33s compelete
+        100 order
+        0 stock
+
+
+/buy2    带重复用户
+    condition:   10000 user, 100 good 100thread worker
+    result:
+        32s compelete
+        100 order
+        0 stock
+
+/buy2    带重复用户
+    condition:   100000 user, 100 good 100thread worker
+    result:
+        311 compelete
+        100 order
+        0 stock
